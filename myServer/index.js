@@ -17,6 +17,9 @@ app.use(cors());
 app.use(express.json());
 
 // ✅ Fix: Add routes BEFORE starting the server
+app.get('/', (req, res) => {
+  res.send('Backend is live 🎉');
+});
 app.use('/api/auth', authRoutes);
 app.use('/api/meeting', meetingRoutes);
 app.use('/api/send-invites', inviteRoutes);
