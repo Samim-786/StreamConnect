@@ -4,6 +4,8 @@ const EventList = () => {
   const [upcoming, setUpcoming] = useState([]);
   const [past, setPast] = useState([]);
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (!user) return;
@@ -11,8 +13,8 @@ const EventList = () => {
     const fetchEvents = async () => {
       try {
         const [upcomingRes, pastRes] = await Promise.all([
-          fetch(`http://localhost:4000/api/events/upcoming/${user.id}`),
-          fetch(`http://localhost:4000/api/events/past/${user.id}`),
+          fetch(`${API_BASE_URL}/api/events/upcoming/${user.id}`),
+          fetch(`${API_BASE_URL}/api/events/past/${user.id}`),
         ]);
 
         const upcomingData = await upcomingRes.json();
@@ -26,7 +28,7 @@ const EventList = () => {
     };
 
     fetchEvents();
-  }, []);
+  }, [API_BASE_URL]);
 
   return (
     <div className="max-w-3xl mx-auto p-4">
@@ -43,7 +45,7 @@ const EventList = () => {
               <li key={event._id} className="border p-3 rounded shadow">
                 <strong>{event.title || 'Untitled Event'}</strong>
                 <div className="text-sm text-gray-600">
-                  Sceduled at: {new Date(event.scheduledTime).toLocaleString()}
+                  Scheduled at: {new Date(event.scheduledTime).toLocaleString()}
                 </div>
               </li>
             ))}

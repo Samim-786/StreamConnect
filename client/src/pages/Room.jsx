@@ -3,10 +3,11 @@ import { LiveKitRoom, VideoConference } from '@livekit/components-react';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
-const SERVER_URL = 'wss://video-test-jctqzf6a.livekit.cloud';
+const SERVER_URL = import.meta.env.VITE_LIVEKIT_URL;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const Room = () => {
-  const { roomId } = useParams();  // This is your roomName
+  const { roomId } = useParams();  // roomName from URL
   const navigate = useNavigate();
   const [token, setToken] = useState(null);
 
@@ -31,9 +32,8 @@ const Room = () => {
 
       try {
         const res = await fetch(
-          `http://localhost:4000/token?roomName=${roomId}&identity=${encodeURIComponent(identity)}&userId=${userId}`
+          `${BACKEND_URL}/token?roomName=${roomId}&identity=${encodeURIComponent(identity)}&userId=${userId}`
         );
-
         const data = await res.json();
         if (res.ok && data.token) {
           setToken(data.token);
@@ -61,7 +61,7 @@ const Room = () => {
     }
 
     try {
-      const res = await fetch('http://localhost:4000/api/send-invites', {
+      const res = await fetch(`${BACKEND_URL}/api/send-invites`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ emails: emailList, roomName: roomId }),

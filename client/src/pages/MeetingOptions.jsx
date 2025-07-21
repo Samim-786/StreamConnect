@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const MeetingOptions = () => {
   const [joinRoomName, setJoinRoomName] = useState('');
   const [newRoomName, setNewRoomName] = useState('');
@@ -13,27 +15,27 @@ const MeetingOptions = () => {
   const user = JSON.parse(localStorage.getItem('user'));
   const userId = user?.id;
 
-  // ✅ Fetch past meetings once
- useEffect(() => {
-  const user = JSON.parse(localStorage.getItem('user'));
-  const fetchPastMeetings = async () => {
-    try {
-      const res = await fetch(`http://localhost:4000/api/meeting/past/${user.id}`);
-      const data = await res.json();
-      setPastMeetings(data);
-    } catch (err) {
-      console.error("Failed to fetch past meetings", err);
-    }
-  };
+  useEffect(() => {
+    const fetchPastMeetings = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/meeting/past/${userId}`);
+        const data = await res.json();
+        setPastMeetings(data);
+      } catch (err) {
+        console.error("Failed to fetch past meetings", err);
+      }
+    };
 
-  fetchPastMeetings();
-}, []);
+    if (userId) {
+      fetchPastMeetings();
+    }
+  }, [userId]);
 
   const handleCreateMeeting = async () => {
     const roomName = 'room-' + uuidv4().slice(0, 6);
 
     try {
-      const res = await fetch('http://localhost:4000/api/meeting/create', {
+      const res = await fetch(`${BACKEND_URL}/api/meeting/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ roomName, createdBy: userId }),
@@ -63,7 +65,7 @@ const MeetingOptions = () => {
     }
 
     try {
-      const res = await fetch('http://localhost:4000/api/send-invites', {
+      const res = await fetch(`${BACKEND_URL}/api/send-invites`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ emails: emailList, roomName: newRoomName }),
@@ -103,7 +105,7 @@ const MeetingOptions = () => {
         </button>
       </div>
 
-      {/* Invite section (shown after meeting created) */}
+      {/* Invite section */}
       {showInvite && (
         <div className="space-y-3 border-t pt-4">
           <p>
@@ -158,19 +160,21 @@ const MeetingOptions = () => {
         </button>
       </div>
 
-      {/* Past meetings section */}
+      {/* Past meetings */}
       {pastMeetings.length > 0 && (
         <div className="mt-8">
           <h2 className="text-xl font-semibold mb-2">📅 Past Meetings</h2>
-             <ul className="space-y-2">
-      {pastMeetings.map((meeting) => (
-        <li key={meeting._id} className="text-gray-700 text-sm">
-          <span className="font-medium">{meeting.role === "creator" ? "🛠️ Created" : "👥 Joined"}</span>{" "}
-          • <span className="text-blue-700">{meeting.roomName}</span> •{" "}
-          {new Date(meeting.createdAt).toLocaleString()}
-        </li>
-      ))}
-    </ul>
+          <ul className="space-y-2">
+            {pastMeetings.map((meeting) => (
+              <li key={meeting._id} className="text-gray-700 text-sm">
+                <span className="font-medium">
+                  {meeting.role === "creator" ? "🛠️ Created" : "👥 Joined"}
+                </span>{" "}
+                • <span className="text-blue-700">{meeting.roomName}</span> •{" "}
+                {new Date(meeting.createdAt).toLocaleString()}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
