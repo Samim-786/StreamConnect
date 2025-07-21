@@ -11,7 +11,7 @@ const inviteRoutes = require('./routes/invite');
 const eventRoutes = require('./routes/event');
 const summaryRoute = require('./routes/summary');
 const app = express();
-const port = 4000;
+const port =  process.env.PORT|| 4000;
 require('./reminderScheduler')
 app.use(cors());
 app.use(express.json());
