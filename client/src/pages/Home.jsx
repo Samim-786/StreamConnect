@@ -1,18 +1,59 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-//import videoCallImg from '../assets/video_call.png';
-//import livestreamImg from '../assets/livestream.png';
-
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import FeatureSlider from './FeatureSlider';
 import EventSlider from './EventSlider';
 
-
-
-
-//import aiSummaryImg from '../assets/ai_summary.png';
-
 export default function Home() {
   const [showSignup, setShowSignup] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+  const response = await axios.post(
+    `${import.meta.env.VITE_BACKEND_URL}/api/auth/signup`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+
+
+      if (response.status === 201) {
+        alert('Signup successful! Please login.');
+        navigate('/login');
+      }
+    } catch (err) {
+      console.error('Signup error:', err);
+      setError(
+        err.response?.data?.message || 
+        'Signup failed. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -35,25 +76,51 @@ export default function Home() {
       {/* Signup Box */}
       {showSignup && (
         <div className="px-6 mt-10 max-w-xl mx-auto">
-          <div className="bg-white p-6 rounded-lg shadow-md">
+          <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-2xl font-semibold mb-4 text-center text-blue-700">Sign Up</h2>
+            
+            {error && (
+              <div className="mb-4 p-2 bg-red-100 text-red-700 rounded text-sm">
+                {error}
+              </div>
+            )}
+
             <input
+              name="name"
               type="text"
-              placeholder="Username"
+              placeholder="Full Name"
+              value={formData.name}
+              onChange={handleInputChange}
+              required
               className="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
             <input
+              name="email"
               type="email"
               placeholder="Email"
+              value={formData.email}
+              onChange={handleInputChange}
+              required
               className="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
             <input
+              name="password"
               type="password"
               placeholder="Password"
+              value={formData.password}
+              onChange={handleInputChange}
+              required
+              minLength="6"
               className="w-full p-3 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
-            <button className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
-              Create Account
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition ${
+                loading ? 'opacity-70 cursor-not-allowed' : ''
+              }`}
+            >
+              {loading ? 'Creating Account...' : 'Create Account'}
             </button>
             <p className="text-center text-sm mt-4">
               Already have an account?{' '}
@@ -61,27 +128,20 @@ export default function Home() {
                 Log in
               </Link>
             </p>
-          </div>
+          </form>
         </div>
       )}
 
       {/* Feature Sections */}
       <div className="flex-grow bg-gray-50 py-20 px-6">
         <div className="max-w-6xl mx-auto grid gap-16 md:grid-cols-2">
-
           {/* Feature 1: Video Calls */}
           <div className="flex flex-col items-center text-center">
-            {/* <img src={videoCallImg} alt="Video Call" className="w-64 mb-6" /> */}
-            {/* <h3 className="text-2xl font-semibold text-blue-700 mb-2">HD Video Conferencing</h3>
-            <p className="text-gray-600">
-              Experience high-quality, low-latency video calls for teams, creators, and professionals.
-            </p> */}
             <FeatureSlider />
           </div>
 
           {/* Feature 2: Livestreaming */}
           <div className="flex flex-col items-center text-center">
-            {/* <img src={livestreamImg} alt="Livestream" className="w-64 mb-6" /> */}
             <h3 className="text-2xl font-semibold text-indigo-700 mb-2">Live Streaming</h3>
             <p className="text-gray-600">
               Go live anytime with your audience using livekit integration and seamless controls.
@@ -90,17 +150,11 @@ export default function Home() {
 
           {/* Feature 3: Event Scheduling */}
           <div className="flex flex-col items-center text-center">
-            {/* <img src={calendarImg} alt="Event Scheduling" className="w-64 mb-6" />
-            <h3 className="text-2xl font-semibold text-green-700 mb-2">Event Scheduling</h3>
-            <p className="text-gray-600">
-              Schedule meetings, send invites, and track upcoming events with our smart calendar tools.
-            </p> */}
             <EventSlider/>
           </div>
 
           {/* Feature 4: AI Summary */}
           <div className="flex flex-col items-center text-center">
-            {/* <img src={aiSummaryImg} alt="AI Summary" className="w-64 mb-6" /> */}
             <h3 className="text-2xl font-semibold text-purple-700 mb-2">AI Meeting Summaries</h3>
             <p className="text-gray-600">
               Let AI generate and email concise summaries of your meetings to all participants.
@@ -112,11 +166,10 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-gray-800 text-white py-6 text-center">
         <p>&copy; {new Date().getFullYear()} StreamConnect. All rights reserved.</p>
-        <div className='flex-col space-x-3.5'>
-        <Link >About</Link>
-        <Link>Contact Us</Link>
-        <Link>Privacy</Link>
-
+        <div className="flex justify-center space-x-6 mt-2">
+          <Link to="/about" className="hover:underline">About</Link>
+          <Link to="/contact" className="hover:underline">Contact Us</Link>
+          <Link to="/privacy" className="hover:underline">Privacy</Link>
         </div>
       </footer>
     </div>

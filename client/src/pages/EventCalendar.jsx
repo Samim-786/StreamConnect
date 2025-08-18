@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-
+import { useNavigate } from 'react-router-dom';
 
 export default function EventCalendar() {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -13,28 +13,32 @@ export default function EventCalendar() {
   const [description, setDesc]    = useState('');
   const [participants, setParts]  = useState('');
 
-  const [events, setEvents] = useState([]);
+  // events already on the calendar
+  const [events, setEvents]       = useState([]);
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
- 
+  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || 'null');
 
-  useEffect(() => {
+  /* ────────────────────────────────────
+     Load existing upcoming events
+  ──────────────────────────────────── */
+   useEffect(() => {
     if (!user) return;
-
     const fetchEvents = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/events/upcoming/${user.id}`);
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/events/upcoming/${user.id}`);
         const data = await res.json();
-        setEvents(data);
+        setEvents(data);                 // store raw events
       } catch (err) {
         console.error('Failed to load events', err);
       }
     };
-
     fetchEvents();
-  }, [user, API_BASE_URL]);
+  }, [user]);
 
+  /* ────────────────────────────────────
+     Helpers
+  ──────────────────────────────────── */
   const resetForm = () => {
     setShowForm(false);
     setTitle('');
@@ -51,18 +55,21 @@ export default function EventCalendar() {
     setShowForm(true);
   };
 
+  /* ────────────────────────────────────
+     Submit new Event
+  ──────────────────────────────────── */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title || !time || !selectedDate) return alert('Fill all * fields');
     if (!/^\d{2}:\d{2}$/.test(time))     return alert('Time HH:MM');
 
     const [hours, minutes] = time.split(':').map(Number);
-    const localDateTime = new Date(selectedDate);
-    localDateTime.setHours(hours);
-    localDateTime.setMinutes(minutes);
-    localDateTime.setSeconds(0);
+const localDateTime = new Date(selectedDate);
+localDateTime.setHours(hours);
+localDateTime.setMinutes(minutes);
+localDateTime.setSeconds(0);
 
-    const isoDateTime = localDateTime.toISOString(); 
+const isoDateTime = localDateTime.toISOString(); 
 
     const payload = {
       title,
@@ -75,13 +82,12 @@ export default function EventCalendar() {
         .filter(Boolean),
     };
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/events`, {
+   try {
+      const res  = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/events`, {   // ← updated
         method : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body   : JSON.stringify(payload),
       });
-
       const data = await res.json();
       if (!res.ok) return alert('Error: ' + data.error);
 
@@ -93,7 +99,9 @@ export default function EventCalendar() {
       alert('Server error');
     }
   };
-
+  /* ────────────────────────────────────
+     Calendar tile helpers
+  ──────────────────────────────────── */
   const tileClassName = ({ date }) => {
     const hasEvent = events.some(ev => (
       new Date(ev.scheduledTime).toDateString() === date.toDateString()
@@ -111,11 +119,14 @@ export default function EventCalendar() {
         {todaysEvents.slice(0,3).map(ev => (
           <li key={ev._id}>{ev.title.slice(0,10)}…</li>
         ))}
-        {todaysEvents.length > 3 && <li>+{todaysEvents.length - 3} more</li>}
+        {todaysEvents.length > 3 && <li>+{todaysEvents.length-3} more</li>}
       </ul>
     );
   };
 
+  /* ────────────────────────────────────
+     JSX
+  ──────────────────────────────────── */
   return (
     <div className="max-w-5xl mx-auto mt-8 grid md:grid-cols-2 gap-6 p-4">
       {/* Calendar */}

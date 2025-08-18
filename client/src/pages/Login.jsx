@@ -13,7 +13,7 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-     const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/signin`, form);
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/signin`, form);
 
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
